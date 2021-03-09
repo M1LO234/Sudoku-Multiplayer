@@ -5,4 +5,4 @@ Web based application enabling user to compete in solving Sudoku Puzzle in real-
 ![Farmers Market Finder Demo](demo/demo1.gif)
 
 App was build using HTML/CSS/JS.
-SQL database is storing all user data, already generated Sudoku Puzzles and single player Sudoku games.
+SQL database is storing all user data, already generated Sudoku Puzzles and single player Sudoku games. Real-time competition is available through websocket server.
