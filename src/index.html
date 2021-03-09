@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Main Page - Suduku</title>
+        <script src="./jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="generator.js"></script>
+        <link href="game-style.css" rel="stylesheet" />
+        <script src="./vue.min.js"></script>
+    </head>
+<body>
+<br>
+<br>
+<div id="Game">
+
+    <div id="app-sudoku-guest">
+       <ul>
+         <li><a href="index.html">Home</a></li>
+         <li style="float:right"><a href="login.html">Sign In/Sign Up</a></li>
+       </ul>
+
+       <div class="buttons-container">
+           <button type="button" name="button" v-on:click="onRefresh()" id="play">Play!</button>
+       </div>
+
+       <transition name="fade">
+           <div class="grid-sudoku" id="sudokuGrid" v-if="isGameStarted && !showAnswer">
+
+               <div v-for="(row, row_id) in sudokuMatrix" class="grid-row">
+                   <div v-for="(cell, cell_id) in row" class="grid-cell" id="selectedRow">
+                        <div v-if="cell.st === 1"> <!-- 1(dane) 2(poprawne) 3(podpowiedz) 0(edycja) -->
+                            <input type="text" v-bind:key="row,cell" v-model="cell.num" class="grid-cell-filled" disabled/>
+                        </div>
+                        <div v-else-if="cell.st === 2">
+                            <input type="text" v-bind:key="row,cell" v-model="cell.num" class="grid-cell-correct" disabled/>
+                        </div>
+                        <div v-else-if="cell.st === 3">
+                            <input type="text" v-bind:key="row,cell" v-model="cell.num" class="grid-cell-hint" disabled/>
+                        </div>
+                        <div v-else>
+                            <input type="text" pattern="[1-9]{1}" v-on:click="selected = true" v-bind:key="row,cell" v-model="cell.num" v-on:keydown.enter="sendXY(row_id,cell_id,cell.num)" v-on:keydown.h="getHint(row_id,cell_id)" class="grid-cell-editor"/>
+                        </div>
+                   </div>
+               </div>
+           </div>
+           <div >
+
+           </div>
+       </transition><br>
+
+       <div class="mistakes-box">
+           <div v-for="i in mistakes">
+               <p class="mistake-cross"> </p>
+           </div>
+       </div>
+
+       <transition name="fade">
+           <div v-if="showAnswer" class="answer">
+               <img v-bind:src="answerImage" class="answer-image" />
+           </div>
+       </transition>
+
+   </div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

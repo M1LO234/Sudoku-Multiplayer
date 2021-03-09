@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Multiplayer - Suduku</title>
+        <script src="./jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="client.js"></script>
+        <script type="text/javascript" src="generator.js"></script>
+        <script type="text/javascript" src="login.js"></script>
+        <script src="./vue.min.js"></script>
+
+        <link href="game-style.css" rel="stylesheet" />
+    </head>
+<body>
+
+
+
+    <div id="Game" >
+
+        <div id="app-sudoku">
+
+            <ul>
+              <li><a href="index.html">Home</a></li>
+
+              <li style="float:right"><a href="login.html">Sign In/Sign Up</a></li>
+              <li id="leaderboardBtn" style="float:right; display:none"><a id="leaderboardLbl" onclick="showLeaderboard(this.text)">Leaderboard</a></li>
+            </ul>
+
+            <br><br>
+
+            <div id="LoginRegisterScreen">
+                <h2 id="status">Choose one option</h2><br>
+
+                <div id="radioLogin">
+                    <input type="radio" name="ls" value="" onclick="showLogIn()" id="d">Login <br>
+                    <input type="radio" name="ls" value="" onclick="showSignUp()" id="d2">Register
+                </div>
+                <input type="text" id="email" name="email" style="display:none" placeholder="Enter your email"><br>
+                <input type="text" id="nick" name="nick" style="display:none" placeholder="Enter your nickname"><br>
+                <input type="password" id="pass" name="pass" style="display:none" placeholder="Enter your new password"><br>
+                <button id="inButton" onclick="signIN()" style="display:none">Login</button>
+                <button id="upButton" onclick="signUp()" style="display:none">Register</button>
+            </div>
+
+
+
+           <div class="buttons-container">
+               <h2 id="labelMulti" style="display:none">Multiplayer</h2>
+               <button class="button" id="getSudokuBtn" style="display:none" v-on:click="initializeMyGame('false')"><span>{{ initializeGameText }}</span></button>
+               <button class="button" id="readyUpBtn" style="display:none" onclick="joinGame()" v-on:click="prepareGame('false')"><span>Join game</span></button>
+               <button class="button" id="generateBtn" style="display:none" v-on:click="generateToDB('false',2)"><span>Generate Sudoku</span></button>
+               <h2 id="labelSingle" style="display:none">Singleplayer</h2>
+               <button class="button" id="getSudokuBtnSingle" style="display:none" v-on:click="initializeMyGame('true')"><span>{{ initializeGameText }}</span></button>
+               <button class="button" id="generateBtnSingle" style="display:none" onclick="showLevels()"><span>Generate Sudoku</span></button>
+               <button class="button" id="generateBtnSingleEasy" style="display:none" v-on:click="generateToDB('true',1)"><span>Easy</span></button>
+               <button class="button" id="generateBtnSingleMedium" style="display:none" v-on:click="generateToDB('true',2)"><span>Medium</span></button>
+               <button class="button" id="generateBtnSingleHard" style="display:none" v-on:click="generateToDB('true',3)"><span>Hard</span></button>
+           </div>
+
+           <div class="game-container">
+               <transition name="fade">
+                   <div class="grid-sudoku" id="sudokuGrid" v-if="isGameStarted && !showAnswer">
+
+                       <div v-for="(row, row_id) in sudokuMatrix" class="grid-row">
+                           <div v-for="(cell, cell_id) in row" class="grid-cell" id="selectedRow">
+                                <div v-if="cell.st === 1"> <!-- 1(dane) 2(poprawne) 3(podpowiedz) 0(edycja) -->
+                                    <input type="text" v-bind:key="row,cell" v-model="cell.num" class="grid-cell-filled" disabled/>
+                                </div>
+                                <div v-else-if="cell.st === 2">
+                                    <input type="text" v-bind:key="row,cell" v-model="cell.num" class="grid-cell-correct" disabled/>
+                                </div>
+                                <div v-else-if="cell.st === 3">
+                                    <input type="text" v-bind:key="row,cell" v-model="cell.num" class="grid-cell-hint" disabled/>
+                                </div>
+                                <div v-else>
+                                    <input type="text" pattern="[1-9]{1}" v-on:click="selected = true" v-bind:key="row,cell" v-model="cell.num" v-on:keydown.enter="sendXY(row_id,cell_id,cell.num)" v-on:keydown.h="getHint(row_id,cell_id)" class="grid-cell-editor"/>
+                                </div>
+                           </div>
+                       </div>
+                   </div>
+                   <div >
+
+                   </div>
+               </transition>
+
+               <div id="progContainer" class="progress-container" style="display:none">
+                   <div v-for="(p, index) in playersList">
+                       <p class="progress-content">{{p[0]}}: {{p[1]}}%</p><br>
+                   </div>
+               </div>
+           </div>
+           <br>
+
+           <div class="mistakes-box">
+               <div v-for="i in mistakes">
+                   <p class="mistake-cross"> </p>
+               </div>
+           </div>
+
+           <transition name="fade">
+               <div v-if="showAnswer" class="answer">
+                   <img v-bind:src="answerImage" class="answer-image" />
+               </div>
+           </transition>
+
+           <div class="buttons-container">
+               <button class="button" id="saveGameBtn" style="display:none" v-on:click="saveSingleGame('u')">Save game and leave</button>
+               <button class="button" id="leaveGameButton" style="display:none" onclick="" v-on:click="clearGame()"><span>Disconnect</span></button>
+               <button class="button" id="myStatsBtn" style="display:none" v-on:click="getStats('m')"><span>My statistics</span></button>
+               <button class="button" id="leaderboardStatsBtn" style="display:none" v-on:click="getStats('l')"><span>Leaders</span></button>
+
+           </div>
+
+           <div id="statsContainer" class="stats-container" style="display:none">
+               <div v-if="statsType == 'm'">
+
+                   <table id="statsTable">
+                      <tr>
+                        <th>Game date</th>
+                        <th>Errors left</th>
+                        <th>Hints left</th>
+                        <th>Status</th>
+                      </tr>
+                      <tr v-for="(g, index) in myStatsApp">
+                          <td>{{g.data}}</td>
+                          <td>{{g.number_error}}</td>
+                          <td>{{g.number_hints}}</td>
+                          <td>{{g.game_finished}}</td>
+                      </tr>
+
+                  </table>
+               </div>
+               <div v-if="statsType == 'l'">
+                   <table id="statsTable">
+                      <tr>
+                        <th>Nick</th>
+                        <th>Games played</th>
+                        <th>Games finished</th>
+                      </tr>
+                      <tr v-for="(g, index) in myStatsApp">
+                          <td>{{g.NICK}}</td>
+                          <td>{{g.GRY}}</td>
+                          <td>{{g.WYGRANE}}</td>
+                      </tr>
+
+                  </table>
+
+               </div>
+
+           </div>
+
+       </div>
+
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
